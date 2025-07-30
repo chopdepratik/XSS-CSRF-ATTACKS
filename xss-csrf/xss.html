@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="xss.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <!-- Prism CSS for styling -->
+    <link href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism.css" rel="stylesheet" />
+
+    <!-- Prism JS for syntax highlighting -->
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.js"></script>
+    <!-- this is useed for automated sanitization -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.4/purify.min.js"></script>
+
+
+    <title>XSS</title>
+</head>
+
+<body>
+    <header>
+        <h1>XSS ATTACK</h1>
+        <div>
+            <h2 id="mode-text">Attack Mode On</h2>
+            <div class="toggle-container">
+                <div class="toggle-btn"></div>
+            </div>
+        </div>
+
+    </header>
+    <main>
+        <p id="intro-para">
+            Welcome! Here you'll get hands-on experience with how XSS (Cross-Site Scripting) attacks work.
+            At the top of this page, there's a toggle button to switch between <strong>Attacking Mode</strong>
+            (vulnerable) and <strong>Safe Mode</strong> (protected).
+        </p>
+
+        <div class="stored-attack">
+            <h2>1. Stored XSS Attack</h2>
+
+            <p>
+                In this section, you’ll see how a <strong>Stored XSS</strong> attack works. A sample blog post is shown
+                below with a comment section where users can leave feedback.
+            </p>
+
+            <p>
+                Unlike reflected XSS, in stored XSS, the malicious script is saved permanently on the server — for
+                example, in a database — and is served as part of the page content to every user who loads that page.
+            </p>
+
+            <p>
+                This means that if an attacker injects a script through a comment field, that script will be executed in
+                the browser of every user who visits the blog post. This can lead to session hijacking, credential
+                theft, defacement, or even spreading malware.
+            </p>
+
+            <p>
+                Try adding a comment that contains a JavaScript payload, such as:
+            </p>
+
+            <p>
+                <code>&lt;img src='' onerror="alert('Hacked!')"&gt;</code>
+            </p>
+
+            <p>
+                If the application doesn't sanitize or escape input properly, the script will run automatically every
+                time the page is loaded, affecting all connected users — not just the attacker.
+            </p>
+
+
+            <div class="blog-container">
+                <div class="blog">
+                    <img src="./xss.png" alt="xss attack">
+                    <h3>What is XSS Attack</h3>
+                    <p>Cross-Site Scripting (XSS) is a type of security vulnerability found in many web applications
+                        where
+                        an attacker injects malicious JavaScript code into a webpage. This injected script then runs in
+                        the
+                        browsers of other users who visit the affected page. XSS attacks are dangerous because they can
+                        allow attackers to steal sensitive information like cookies, session tokens, or personal data,
+                        manipulate website content, or perform actions on behalf of the user without their knowledge.
+                        These
+                        attacks typically occur when a web application accepts user input (such as comments, search
+                        queries,
+                        or form submissions) and displays it on a page without properly validating or escaping the
+                        input.
+                        For example, if a user submits a comment like
+                        &lt;img src='' onerror=alert('Hacked!')&gt; and the site displays it as-is, the
+                        script will
+                        execute in the
+                        browser of anyone who views the comment. To protect against XSS, developers must sanitize or
+                        escape
+                        all user inputs before rendering them, avoid using methods like innerHTML to insert dynamic
+                        content,
+                        and implement security measures such as Content Security Policies (CSP) and input validation on
+                        both
+                        the client and server sides.
+                    </p>
+                    <form id="commentForm">
+                        <input type="text"
+                            placeholder="Enter Your Comment eg.&lt;img src=x onerror='alert('Hacked!')'&gt;" required
+                            id="commentInput">
+                        <button>submit</button>
+                    </form>
+
+                    <div class="show-comments">
+                        <button id="commentBtn">Click to see Comments</button>
+                        <div id="comment-list-container">
+                            <ul id="comment-list">
+                                <li>Great Post</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p>
+                Here’s what happens:
+            </p>
+            <ul>
+                <li>
+                    In <strong>Attacking Mode</strong>, when you submit a comment, it is stored directly without any
+                    input sanitization — including dangerous tags like <code>&lt;script&gt;</code> or
+                    <code>&lt;img onerror&gt;</code>.
+                </li>
+                <li>
+                    When you click the <strong>"Click to see Comments"</strong> button, the saved comment (including any
+                    embedded scripts or image-based XSS payloads) is inserted into the list using
+                    <code>innerHTML</code>.
+                </li>
+                <li>
+                    If the comment contains a malicious tag like <code>&lt;img src=x onerror="alert('XSS')"&gt;</code>,
+                    it will auto-execute as soon as it is rendered inside the comment list.
+                </li>
+                <li>
+                    This demonstrates how dangerous unsanitized user input can be — even something that looks like a
+                    simple comment box can lead to full browser-level script execution.
+                </li>
+            </ul>
+            <div class="code-snippet-container">
+                <div class="vulnerable-code">
+                    <h3>🚨 Vulnerable Code</h3>
+                    <pre><code class="language-js">
+//IF COMMENT STORED IN THE BROWSER
+commentForm.addEventListener('submit',(e)=>{
+    e.preventDefault();
+    const comment = commentInput.value;
+    localStorage.setItem('comment', comment); // ❌ Directly storing raw input
+    commentInput.value = "";
+});
+
+commentBtn.addEventListener('click', () => {
+    commentListContainer.classList.toggle('display');
+    if (commentListContainer.classList.contains('display')) {
+        const comment = localStorage.getItem('comment');
+        commentList.innerHTML += `<li>${comment}</li>`; // ❌ Vulnerable: raw HTML inserted
+    }
+});
+
+// IF COMMENT STORED IN THE BACKEND DB
+commentForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const comment = commentInput.value;
+
+    await fetch('/api/comments', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ comment })
+    });
+
+    commentInput.value = '';
+});
+
+app.post('/api/comments', async (req, res) => {
+    const { comment } = req.body;
+    await Comment.create({ text: comment }); // Save to DB
+    res.status(200).json({ message: 'Comment saved' });
+});
+    </code></pre>
+                </div>
+
+                <div class="safe-code">
+                    <h3>✅ Safe Code</h3>
+                    <pre><code class="language-js">
+//IF THE COMMENT STORED IN THE BEOWSER
+commentForm.addEventListener('submit',(e)=>{
+    e.preventDefault();
+    const comment = commentInput.value;
+    localStorage.setItem('comment', comment);
+    commentInput.value = "";
+});
+
+commentBtn.addEventListener('click', () => {
+    commentListContainer.classList.toggle('display');
+    if (commentListContainer.classList.contains('display')) {
+        const comment = localStorage.getItem('comment');
+        const li = document.createElement('li');
+        li.textContent = comment; // ✅ Safe: displays as text
+        commentList.appendChild(li);
+    }
+});
+
+// IF THE COMMENT STORED IN THE BACKEND DB
+commentForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const comment = commentInput.value;
+
+    await fetch('/api/comments', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ comment })
+    });
+
+    commentInput.value = '';
+});
+
+app.post('/api/comments', async (req, res) => {
+    const { comment } = req.body;
+
+    // Simple sanitization
+    const safeComment = comment.replace(/&lt;/g, "&amp;lt;").replace(/&gt;/g, "&amp;gt;");
+
+     
+    await Comment.create({ text: safeComment }); // Save to DB
+    res.status(200).json({ message: 'Comment saved' });
+});
+
+//THERE ARE ALSO SOME PRE-DEFINED FUNCTION AVAILABLE TO SANITIZE THE INPUT eg.  DOMPurity From FRONTEND ONLY
+    </code></pre>
+                </div>
+            </div>
+
+
+
+
+            <p>
+                When you switch to <strong>Safe Mode</strong>, input sanitization is applied. Any special characters
+                (like
+                <code>&lt;</code> or <code>&gt;</code>) are escaped, so the browser treats them as plain text — not
+                code.
+            </p>
+
+            <p style="color: green;">
+                ✅ This helps prevent Stored XSS attacks by ensuring that even if a user submits a script, it will not be
+                executed.
+            </p>
+        </div>
+        <div class="reflected-attack">
+            <h2>2. REFLECTED ATTACK</h2>
+
+            <p>
+                A <strong>Reflected XSS</strong> attack occurs when malicious user input is immediately returned (or
+                "reflected") by
+                the server in the HTTP response, typically within the HTML of a webpage, without proper sanitization or
+                escaping.
+            </p>
+
+            <ul>
+                <li>
+                    The attacker usually crafts a URL containing a malicious script in a query parameter.
+                    <br />
+                    Example:
+                    <br />
+                    <code>http://example.com/search?q=&lt;script&gt;alert('XSS')&lt;/script&gt;</code>
+                </li>
+                <li>Note:by default all modern browser does the sanitization on the inputed script command but still
+                    there are some way by which attack can be performed.</li>
+                <li>
+                    The server takes the <code>q</code> parameter, embeds it into the response HTML, and sends it back
+                    to the client
+                    without escaping the script.
+                </li>
+
+                <li>
+                    The browser renders the response and executes the injected JavaScript as part of the page.
+                </li>
+
+                <li>
+                    This type of XSS <strong>requires a round-trip to the server</strong>, which reflects the payload
+                    back in its
+                    response.
+                </li>
+
+                <li>
+                    The attack typically requires social engineering — the attacker sends a victim a malicious link, and
+                    once the link
+                    is clicked, the payload is executed in the context of a trusted domain.
+                </li>
+
+                <li>
+                    Common vulnerable sinks in server-side code include: <code>res.send()</code>,
+                    <code>res.write()</code>,
+                    <code>echo</code>, or template rendering without proper encoding.
+                </li>
+            </ul>
+
+            <p>
+                <strong>Tip:</strong> To prevent Reflected XSS, always validate and sanitize user inputs on the server,
+                and escape
+                any dynamic content before rendering it in HTML.
+            </p>
+
+            <div class="search-container">
+                <form action="" method="get" id="reflected-form-reflected">
+                    <input type="text" placeholder="Search something.." name='userInputForReflected' required
+                        id="reflected-search">
+                    <button type="submit">Search</button>
+                    <div class="search-content-reflected">
+                        <h4>Searched Query Response:</h4>
+                    </div>
+                </form>
+
+            </div>
+            <p>
+                Here’s what happens in a <strong>Reflected XSS</strong> attack:
+            </p>
+            <ul>
+                <li>
+                    The user sends a specially crafted URL or form input that includes malicious JavaScript code — often
+                    through a query parameter like <code>?search=</code>.
+                </li>
+                <li>
+                    This input is immediately reflected back by the server in the HTTP response without proper
+                    sanitization or encoding.
+                </li>
+                <li>
+                    Since the malicious script is included in the server’s response and interpreted by the browser, it
+                    gets executed within the context of that page.
+                </li>
+                <li>
+                    For example, visiting a URL like:<br />
+                    <code>http://example.com/search?query=&lt;script&gt;alert('XSS')&lt;/script&gt;</code><br />
+                    can trigger a pop-up if the server directly includes the query parameter in the HTML output without
+                    encoding.
+                </li>
+                <li>
+                    This attack involves both the client and the server — the server echoes the user input, and the
+                    browser renders and executes the malicious script.
+                </li>
+                <li>
+                    Reflected XSS attacks are typically delivered via phishing links or social engineering, where a user
+                    is tricked into clicking a malicious URL.
+                </li>
+            </ul>
+
+            <p><strong>Note:</strong> To prevent Reflected XSS, always validate and encode user input on the server
+                before rendering it in HTML output. Use security libraries like <code>helmet</code> (for Node.js),
+                built-in frameworks’ output encoding, or Content Security Policy (CSP).</p>
+
+
+            <div class="code-snippet-container">
+                <div class="vulnerable-code">
+                    <h3>🚨 Vulnerable Code</h3>
+                    <pre><code class="language-js">
+//for Reflected XSS
+//FRONTEND JAVASCRIPT CODE
+const reflectedParams = new URLSearchParams(window.location.search);
+const reflectedData = reflectedParams.get('userInputForReflected');
+
+if (reflectedData) {
+    const responseField = document.getElementsByClassName('search-content-reflected')[0];  
+
+    
+    (async () => {
+        try {
+            const response = await fetch(`http://localhost:5500/?userInput=${reflectedData}`);
+            const text = await response.text(); 
+            responseField.innerHTML = text ;      
+        } catch (error) {
+            console.error("Fetch error:", error);
+            responseField.innerHTML = "<p>Failed to fetch response.</p>";
+        }
+    })();
+}
+
+//BACKEND SERVER SIDE CODE 
+
+import express from 'express';
+import cors from 'cors'
+const app = express();
+
+app.use(cors())
+app.get('/', (req, res) => {
+    const userInput = req.query.userInput || '';
+
+    res.send(`
+        &lt;html>
+            &lt;head>&lt;title>Reflected XSS Demo&lt;/title>&lt;/head>
+            &lt;body>
+                &lt;h2>Welcome!&lt;/h2>
+                &lt;p>You searched for: ${userInput}&lt;/p>
+                
+            &lt;/body>
+        &lt;/html>
+    `);
+});
+
+app.listen(5500, () => {
+    console.log('Server running at http://localhost:3000');
+});
+
+
+    </code></pre>
+                </div>
+
+                <div class="safe-code">
+                    <h3>✅ Safe Code</h3>
+                    <pre><code class="language-js">
+//FRONTEND JAVASCRIPT CODE
+const reflectedParams = new URLSearchParams(window.location.search);
+const reflectedData = reflectedParams.get('userInputForReflected');
+
+if (reflectedData) {
+    const responseField = document.getElementsByClassName('search-content-reflected')[0];  
+
+    
+    (async () => {
+        try {
+            const response = await fetch(`http://localhost:5500/?userInput=${reflectedData}`);
+            const text = await response.text(); 
+            responseField.innerHTML = DOMPurify.sanitize(text);
+            //to use this attach given script,it automate sanitization
+            //&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.4/purify.min.js">&lt;/script>
+
+      
+        } catch (error) {
+            console.error("Fetch error:", error);
+            responseField.innerHTML = "<p>Failed to fetch response.</p>";
+        }
+    })();
+}
+
+//BACKEND SEVER SIDE CODE
+import express from 'express';
+import cors from 'cors';
+
+const app = express();
+app.use(cors());
+
+function sanitizeInput(str) {
+    return str
+        .replace(/&/g, "&amp;")
+        .replace(/&lt;/g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#x27;");
+}
+
+app.get('/', (req, res) => {
+    const userInput = req.query.userInput || '';
+    const safeInput = sanitizeInput(userInput);
+
+    res.send(`
+         &lt;html>
+            &lt;head>&lt;title>Reflected XSS Demo&lt;/title>&lt;/head>
+            &lt;body>
+                &lt;h2>Welcome!&lt;/h2>
+                &lt;p>You searched for: ${safeInput}&lt;/p>
+                
+            &lt;/body>
+        &lt;/html>
+    `);
+});
+
+app.listen(5500, () => {
+    console.log('Server running at http://localhost:5500');
+});
+
+
+
+//THERE ARE ALSO SOME PRE-DEFINED FUNCTION AVAILABLE TO SANITIZE THE INPUT eg.  DOMPurity From FRONTEND ONLY
+    </code></pre>
+                </div>
+            </div>
+            <p>
+                When you switch to <strong>Safe Mode</strong>, input sanitization is applied. Any special characters
+                (like
+                <code>&lt;</code> or <code>&gt;</code>) are escaped, so the browser treats them as plain text — not
+                code.
+            </p>
+
+            <p style="color: green;">
+                ✅ This helps prevent DOM-based XSS attacks by ensuring that even if a user submits a script, it will not
+                be
+                executed.
+            </p>
+        </div>
+        <div class="DOM-attack">
+            <h2>2. DOM-Based XSS Attack</h2>
+
+            <p>
+                In this section, you’ll understand how a <strong>DOM-Based XSS</strong> attack works. Unlike Reflected
+                or Stored XSS,
+                DOM-Based XSS occurs entirely in the browser when client-side JavaScript dynamically modifies the page
+                content
+                based on user input — without proper sanitization.
+            </p>
+
+            <p>
+                In this case, the malicious script is not processed by the server at all. Instead, it is handled by the
+                browser’s DOM
+                APIs like <code>document.location</code>, <code>document.write()</code>, or <code>innerHTML</code>.
+            </p>
+
+            <p>
+                Example malicious URL (executed on the client side):<br />
+                <code>
+        http://example.com/#&lt;img src="" onerror="alert('Hacked!')"&gt;
+    </code>
+            </p>
+
+            <p>
+                If the application’s JavaScript reads from the fragment (hash) or other parts of the URL and injects it
+                directly
+                into the DOM using <code>innerHTML</code>, this can lead to DOM-Based XSS.
+            </p>
+
+            <p>
+                DOM-Based XSS is dangerous because it bypasses server-side protections and is often harder to detect.
+            </p>
+
+
+            <div class="search-container">
+                <form action="" method="get" id="reflected-form">
+                    <input type="text" placeholder="Search something.." name='userInput' required id="reflected-search">
+                    <button type="submit">Search</button>
+                    <div class="search-content">
+                        <h4>Searched Query</h4>
+                    </div>
+                </form>
+
+            </div>
+            <p>
+                Here’s what happens in a <strong>DOM-based XSS</strong> attack:
+            </p>
+            <ul>
+                <li>
+                    The user input (e.g., a query parameter like <code>?userInput=</code>) is extracted directly from
+                    the browser using JavaScript methods such as <code>window.location.search</code>,
+                    <code>location.hash</code>, or <code>document.URL</code>.
+                </li>
+                <li>
+                    Instead of involving the server, the value is manipulated and reflected directly into the DOM by
+                    client-side code — often using <code>innerHTML</code>, <code>document.write()</code>, or similar
+                    unsafe methods.
+                </li>
+                <li>
+                    If this value is not properly sanitized, and contains a script (like
+                    <code>&lt;img src="" onerror="alert('XSS')"&gt;</code>), it gets executed in the browser context.
+                </li>
+                <li>
+                    For example, visiting a URL like:<br />
+                    <code>http://example.com/page.html?userInput=&lt;img src="exaple.png" alt="hacked img""&gt;</code><br />
+                    will cause the browser to execute the script when the page loads, if the JavaScript code directly
+                    injects that input into the DOM.
+                </li>
+                <li>
+                    This attack is purely client-side — the server does not process or sanitize the input — and the
+                    payload is not stored or reflected by the server response.
+                </li>
+                <li>
+                    The danger lies in insecure frontend JavaScript that uses unsanitized input in dangerous DOM
+                    methods.
+                </li>
+            </ul>
+
+            <p><strong>Note:</strong> To prevent DOM-based XSS, avoid using <code>innerHTML</code> or similar methods
+                with unsanitized user input. Use <code>textContent</code> instead, or apply proper encoding libraries
+                like DOMPurify.</p>
+
+            <div class="code-snippet-container">
+                <div class="vulnerable-code">
+                    <h3>🚨 Vulnerable Code</h3>
+                    <pre><code class="language-js">
+//for Reflected XSS
+const params = new URLSearchParams(window.location.search)
+const data = params.get('userInput')
+if(data){
+    searchedContent.innerHTML +=`<p>${data}</p>`
+ }
+    </code></pre>
+                </div>
+
+                <div class="safe-code">
+                    <h3>✅ Safe Code</h3>
+                    <pre><code class="language-js">
+//FIRST METHOD
+const params = new URLSearchParams(window.location.search)
+const data = params.get('userInput')
+if (data) {
+    const p = document.createElement('p');
+    p.textContent = data;  // Automatically escapes any unsafe input
+    searchedContent.appendChild(p);
+}
+
+//SECOND METHOND
+const params = new URLSearchParams(window.location.search);
+const data = params.get('userInput');
+
+function sanitizeInput(input) {
+    return input
+        .replace(/&/g, "&amp;")
+        .replace(/&lt;/g, "&lt;")
+        .replace(/&gt;/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#x27;");
+}
+
+if (data) {
+    const safeData = sanitizeInput(data);
+    searchedContent.innerHTML += `<p>${safeData}</p>`;
+}
+
+
+//THERE ARE ALSO SOME PRE-DEFINED FUNCTION AVAILABLE TO SANITIZE THE INPUT eg.  DOMPurity From FRONTEND ONLY
+    </code></pre>
+                </div>
+            </div>
+            <p>
+                When you switch to <strong>Safe Mode</strong>, input sanitization is applied. Any special characters
+                (like
+                <code>&lt;</code> or <code>&gt;</code>) are escaped, so the browser treats them as plain text — not
+                code.
+            </p>
+
+            <p style="color: green;">
+                ✅ This helps prevent DOM-based XSS attacks by ensuring that even if a user submits a script, it will not
+                be
+                executed.
+            </p>
+        </div>
+    </main>
+    <footer>
+        <p>© Web Security Learning</p>
+        <p>Created by <strong>&hearts; Pratik Chopde</strong> </p>
+    </footer>
+
+    <script src="xss.js"></script>
+</body>
+
+</html>

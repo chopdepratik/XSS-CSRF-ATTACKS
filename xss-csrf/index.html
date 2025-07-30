@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <title>Learn XSS-CSRF</title>
+</head>
+
+<body>
+    <h1>Learn XSS and CSRF</h1>
+
+    <div class="container">
+        <p id="heading">This page is designed to help you understand Cross-Site Scripting (XSS) and Cross-Site Request
+            Forgery (CSRF)
+            vulnerabilities. Through simple, interactive examples, you'll learn how attackers exploit insecure web
+            applications using these techniques, and how developers can safeguard their code against such threats. This
+            site
+            offers a practical overview for students, developers, and security enthusiasts aiming to deepen their
+            knowledge
+            of web-based attack vectors and defense mechanisms.</p>
+        <img src="attack.png" alt="XSS Image">
+
+        <div class="xss">
+            <h2>What is XSS?</h2>
+
+            <p>
+                Cross-Site Scripting (XSS) is a widespread and dangerous security vulnerability that occurs when a web
+                application
+                allows untrusted data—typically user input—to be injected into web pages without proper validation or
+                sanitization.
+                When this malicious input is rendered as executable code in the browser, attackers can manipulate how
+                the
+                page behaves
+                for other users who view it.
+            </p>
+
+            <p>
+                XSS exploits the trust a user places in a website. By injecting malicious JavaScript code, attackers can
+                cause a range
+                of harmful outcomes:
+            </p>
+
+            <ul>
+                <li>Stealing sensitive data, such as login credentials, personal information, or cookies</li>
+                <li>Hijacking user sessions, allowing the attacker to impersonate the victim</li>
+                <li>Redirecting users to phishing or malware-laden websites</li>
+                <li>Defacing content or altering the behavior of the page to mislead users</li>
+                <li>Spying on users' activities, including logging keystrokes or capturing screen contents</li>
+            </ul>
+            <h2>Way to perform XSS</h2>
+            <ul>
+                <li>🔍 <strong>Reflected XSS</strong>: The injected script is reflected off a web server, such as in a
+                    search result or error message.</li>
+                <li>💾 <strong>Stored XSS</strong>: The injected script is stored on the server (e.g., in a database)
+                    and
+                    served to users later.</li>
+                <li>🧠 <strong>DOM-based XSS</strong>: The vulnerability exists in the client-side code, where the
+                    script
+                    modifies the DOM without proper validation.</li>
+            </ul>
+
+            <a href="xss.html">
+                <button>Learn With Demo</button>
+            </a>
+        </div>
+
+        <div class="csrf">
+            <h2>What is CSRF?</h2>
+            <p>
+                Cross-Site Request Forgery (CSRF) is a deceptive and dangerous web security vulnerability that enables
+                attackers to
+                impersonate a trusted user by exploiting their authenticated session. When a user is logged into a web
+                application,
+                their browser automatically includes authentication credentials (like cookies or session tokens) with
+                every
+                request.
+                CSRF attacks take advantage of this behavior to trick the browser into submitting unauthorized requests
+                without the
+                user's awareness or intention.
+            </p>
+
+            <p>Attackers can exploit CSRF vulnerabilities to:</p>
+
+            <ul>
+                <li>🔒 Change user account settings (e.g., email or password)</li>
+                <li>💸 Perform financial transactions (like initiating a funds transfer)</li>
+                <li>🗑️ Delete important data or deactivate user accounts</li>
+                <li>📨 Send spam or messages through the user's account</li>
+                <li>👁️ Escalate privileges or manipulate site configurations</li>
+            </ul>
+
+            <h2>Way to perform CSRF</h2>
+            <ul>
+                <li>Using a malicious link: An attacker can create a link that, when clicked, performs an action on
+                    behalf
+                    of the user.</li>
+                <li>Embedding malicious code: An attacker can embed code in a web page that automatically submits a
+                    request
+                    to another site where the user is authenticated.</li>
+                <li>Using social engineering: An attacker can trick a user into performing an action that results in a
+                    CSRF
+                    attack.</li>
+            </ul>
+            <a href="csrf.html">
+                <button>Dome not available</button>
+            </a>
+        </div>
+        <footer>
+            <p>© Web Security Learning</p>
+            <p>Created by <strong>&hearts; Pratik Chopde</strong> </p>
+        </footer>
+    </div>
+
+
+    <script src="script.js"></script>
+
+</html>
