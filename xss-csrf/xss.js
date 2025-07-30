@@ -107,7 +107,7 @@ if (reflectedData) {
 
     (async () => {
         try {
-            const response = await fetch(`http://localhost:5500/?userInput=${reflectedData}`);
+            const response = await fetch(`https://xss-csrf-attacks.onrender.com/?userInput=${reflectedData}`);
             const text = await response.text();
             responseField.innerHTML = isSafeMode=='true' ? escapeSpecial(text) : text;
         } catch (error) {
